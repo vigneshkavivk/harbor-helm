@@ -1,0 +1,25 @@
+expose:
+  type: loadBalancer
+  tls:
+    enabled: true
+    certSource: auto
+  
+  loadBalancer:
+    name: harbor
+    IP: ""  # Set to specific IP if needed
+    ports:
+      httpPort: 80
+      httpsPort: 443
+      notaryPort: 4443
+    annotations: {}
+    sourceRanges: []  # Restrict IP ranges if needed
+
+externalURL: https://your-harbor-domain.com
+
+persistence:
+  enabled: true
+  persistentVolumeClaim:
+    registry:
+      storageClass: "standard"
+      accessMode: ReadWriteOnce
+      size: 50Gi
