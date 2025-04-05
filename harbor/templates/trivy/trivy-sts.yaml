@@ -97,11 +97,6 @@ spec:
               value: {{ .Values.trivy.vulnType | quote }}
             - name: "SCANNER_TRIVY_TIMEOUT"
               value: {{ .Values.trivy.timeout | quote }}
-            - name: "SCANNER_TRIVY_GITHUB_TOKEN"
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "harbor.trivy" . }}
-                  key: gitHubToken
             - name: "SCANNER_TRIVY_SEVERITY"
               value: {{ .Values.trivy.severity | quote }}
             - name: "SCANNER_TRIVY_IGNORE_UNFIXED"
