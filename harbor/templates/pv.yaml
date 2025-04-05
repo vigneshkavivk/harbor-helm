@@ -1,0 +1,97 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: harbor-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: Immediate
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp2
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: harbor-registry-pv
+  labels:
+    type: local
+spec:
+  storageClassName: "harbor-storage"  # Empty string matches PVCs that don't specify a storage class
+  capacity:
+    storage: 5Gi  # Matches the registry PVC size from your config
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/harbor/registry"  # You can change this path as needed
+  persistentVolumeReclaimPolicy: Retain  # Recommended for production to avoid data loss
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: harbor-jobservice-pv
+  labels:
+    type: local
+spec:
+  storageClassName: "harbor-storage"
+  capacity:
+    storage: 1Gi  # Matches the jobservice PVC size from your config
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/harbor/jobservice"
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: harbor-database-pv
+  labels:
+    type: local
+spec:
+  storageClassName: "harbor-storage"
+  capacity:
+    storage: 1Gi  # Matches the database PVC size from your config
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/harbor/database"
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: harbor-redis-pv
+  labels:
+    type: local
+spec:
+  storageClassName: "harbor-storage"
+  capacity:
+    storage: 1Gi  # Matches the redis PVC size from your config
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/harbor/redis"
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: harbor-trivy-pv
+  labels:
+    type: local
+spec:
+  storageClassName: "gp2"
+  capacity:
+    storage: 5Gi  # Matches the trivy PVC size from your config
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/data/harbor/trivy"
+  persistentVolumeReclaimPolicy: Retain
