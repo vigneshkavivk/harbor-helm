@@ -69,10 +69,24 @@ spec:
       initContainers:
         - name: fix-perms
           image: goharbor/trivy-adapter-photon:v2.12.2
-          command: [ "chmod", "+x", "/home/scanner/entrypoint.sh" ]
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /home/scanner/entrypoint.sh /shared/entrypoint.sh && chmod +x /shared/entrypoint.sh
+          volumeMounts:
+            - name: shared-scripts
+              mountPath: /shared
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
+        - name: trivy
+          image: goharbor/trivy-adapter-photon:v2.12.2
+          command: ["/shared/entrypoint.sh"]
+          volumeMounts:
+            - name: shared-scripts
+              mountPath: /shared
+
+              
         - name: trivy
           image: {{ .Values.trivy.image.repository }}:{{ .Values.trivy.image.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
@@ -179,6 +193,8 @@ spec:
 {{ toYaml .Values.trivy.resources | indent 12 }}
       {{- if or (or .Values.internalTLS.enabled .Values.caBundleSecretName) (or (not .Values.persistence.enabled) $trivy.existingClaim) }}
       volumes:
+         - name: shared-scripts
+          emptyDir: {}
       {{- if .Values.internalTLS.enabled }}
       - name: trivy-internal-certs
         secret:
