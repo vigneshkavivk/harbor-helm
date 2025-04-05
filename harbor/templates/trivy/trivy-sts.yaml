@@ -44,8 +44,9 @@ spec:
       serviceAccountName: {{ .Values.trivy.serviceAccountName }}
 {{- end }}
       securityContext:
-        runAsUser: 1000
-        fsGroup: 1000
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 10000
       automountServiceAccountToken: {{ .Values.trivy.automountServiceAccountToken | default false }}
 {{- with .Values.trivy.topologySpreadConstraints}}
       topologySpreadConstraints:
