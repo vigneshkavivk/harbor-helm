@@ -67,6 +67,9 @@ spec:
 {{- end }}
       {{- with .Values.trivy.initContainers }}
       initContainers:
+        - name: fix-perms
+          image: goharbor/trivy-adapter-photon:v2.12.2
+          command: [ "chmod", "+x", "/home/scanner/entrypoint.sh" ]
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
