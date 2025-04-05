@@ -1,8 +1,0 @@
-1. Get the application URL by running:
-{{- if eq .Values.expose.type "loadBalancer" }}
-  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "harbor.fullname" . }}-loadbalancer -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  echo "Harbor is available at https://$SERVICE_IP"
-{{- end }}
-
-2. Get the admin password by running:
-  kubectl get secret --namespace {{ .Release.Namespace }} {{ include "harbor.fullname" . }}-core -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 --decode
