@@ -76,7 +76,7 @@ metadata:
   labels:
     type: local
 spec:
-  storageClassName: "gp2"
+  storageClassName: "harbor-storage"
   capacity:
     storage: 5Gi  # Matches the trivy PVC size from your config
   accessModes:
