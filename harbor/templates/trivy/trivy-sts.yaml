@@ -193,8 +193,8 @@ spec:
 {{ toYaml .Values.trivy.resources | indent 12 }}
       {{- if or (or .Values.internalTLS.enabled .Values.caBundleSecretName) (or (not .Values.persistence.enabled) $trivy.existingClaim) }}
       volumes:
-         - name: shared-scripts
-          emptyDir: {}
+       - name: shared-scripts
+         emptyDir: {}
       {{- if .Values.internalTLS.enabled }}
       - name: trivy-internal-certs
         secret:
