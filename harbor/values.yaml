@@ -788,6 +788,8 @@ registry:
     dryrun: false
 
 trivy:
+  persistence:
+    enabled: false
   # enabled the flag to enable Trivy scanner
   enabled: true
   image:
