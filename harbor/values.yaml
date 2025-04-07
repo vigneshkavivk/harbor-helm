@@ -900,7 +900,6 @@ trivy:
   timeout: 5m0s
 
 database:
-    servicePort: 5432
   # if external database is used, set "type" to "external"
   # and fill the connection information in "external" section
   type: internal
