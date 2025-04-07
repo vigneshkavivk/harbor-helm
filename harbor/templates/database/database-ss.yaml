@@ -1,12 +1,12 @@
-{{- if eq .Values.database.type "internal" }}
 {{- $database := .Values.persistence.persistentVolumeClaim.database }}
+{{- if eq .Values.database.type "internal" }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: "{{ template "harbor.database" . }}"
   namespace: {{ .Release.Namespace | quote }}
   labels:
-{{ include "harbor.labels" . | indent 4 }}
+    {{- include "harbor.labels" . | nindent 4 }}
     component: database
     app.kubernetes.io/component: database
 spec:
@@ -14,68 +14,65 @@ spec:
   serviceName: "{{ template "harbor.database" . }}"
   selector:
     matchLabels:
-{{ include "harbor.matchLabels" . | indent 6 }}
+      {{- include "harbor.matchLabels" . | nindent 6 }}
       component: database
   template:
     metadata:
       labels:
-{{ include "harbor.labels" . | indent 8 }}
+        {{- include "harbor.labels" . | nindent 8 }}
         component: database
         app.kubernetes.io/component: database
-{{- if .Values.database.podLabels }}
-{{ toYaml .Values.database.podLabels | indent 8 }}
-{{- end }}
+      {{- with .Values.database.podLabels }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       annotations:
         checksum/secret: {{ include (print $.Template.BasePath "/database/database-secret.yaml") . | sha256sum }}
-{{- if .Values.database.podAnnotations }}
-{{ toYaml .Values.database.podAnnotations | indent 8 }}
-{{- end }}
+        {{- with .Values.database.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       securityContext:
         runAsUser: 999
         fsGroup: 999
-{{- if .Values.database.internal.serviceAccountName }}
+      {{- if .Values.database.internal.serviceAccountName }}
       serviceAccountName: {{ .Values.database.internal.serviceAccountName }}
-{{- end }}
-{{- with .Values.imagePullSecrets }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-{{ toYaml . | indent 8 }}
-{{- end }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       automountServiceAccountToken: {{ .Values.database.internal.automountServiceAccountToken | default false }}
       terminationGracePeriodSeconds: 120
       initContainers:
         - name: data-permissions-ensurer
-    image: {{ .Values.database.internal.image.repository }}:{{ .Values.database.internal.image.tag }}
-    imagePullPolicy: {{ .Values.imagePullPolicy }}
-    command: ["/bin/sh"]
-    args:
-      - -c
-      - |
-        mkdir -p /var/lib/postgresql/data/pgdata && chmod 700 /var/lib/postgresql/data/pgdata
-    securityContext:
-      runAsUser: 0
-    volumeMounts:
-      - name: database-data
-        mountPath: /var/lib/postgresql/data
-        subPath: {{ $database.subPath }}
-{{- if .Values.database.internal.initContainer.permissions.resources }}
-    resources:
-{{ toYaml .Values.database.internal.initContainer.permissions.resources | indent 6 }}
-{{- end }}
+          image: {{ .Values.database.internal.image.repository }}:{{ .Values.database.internal.image.tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - |
+              mkdir -p /var/lib/postgresql/data/pgdata && chmod 700 /var/lib/postgresql/data/pgdata
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: database-data
+              mountPath: /var/lib/postgresql/data
+              subPath: {{ $database.subPath }}
+          {{- if .Values.database.internal.initContainer.permissions.resources }}
           resources:
-{{ toYaml .Values.database.internal.initContainer.permissions.resources | indent 12 }}
-{{- end }}
-{{- with .Values.database.internal.extraInitContainers }}
-{{ toYaml . | indent 8 }}
-{{- end }}
+            {{- toYaml .Values.database.internal.initContainer.permissions.resources | nindent 12 }}
+          {{- end }}
+      {{- with .Values.database.internal.extraInitContainers }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: database
           image: {{ .Values.database.internal.image.repository }}:{{ .Values.database.internal.image.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-{{- if not (empty .Values.containerSecurityContext) }}
+          {{- if not (empty .Values.containerSecurityContext) }}
           securityContext:
-{{ toYaml .Values.containerSecurityContext | indent 12 }}
-{{- end }}
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          {{- end }}
           livenessProbe:
             exec:
               command: ["/docker-healthcheck.sh"]
@@ -88,74 +85,74 @@ spec:
             initialDelaySeconds: 1
             periodSeconds: 10
             timeoutSeconds: {{ .Values.database.internal.readinessProbe.timeoutSeconds }}
-{{- if .Values.database.internal.resources }}
-          resources:
-{{ toYaml .Values.database.internal.resources | indent 12 }}
-{{- end }}
           envFrom:
             - secretRef:
                 name: "{{ template "harbor.database" . }}"
           env:
             - name: PGDATA
               value: "/var/lib/postgresql/data/pgdata"
-{{- with .Values.database.internal.extraEnvVars }}
-{{ toYaml . | indent 12 }}
-{{- end }}
+            {{- with .Values.database.internal.extraEnvVars }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
           volumeMounts:
             - name: database-data
               mountPath: /var/lib/postgresql/data
               subPath: {{ $database.subPath }}
             - name: shm-volume
               mountPath: /dev/shm
+          {{- if .Values.database.internal.resources }}
+          resources:
+            {{- toYaml .Values.database.internal.resources | nindent 12 }}
+          {{- end }}
       volumes:
         - name: shm-volume
           emptyDir:
             medium: Memory
             sizeLimit: {{ .Values.database.internal.shmSizeLimit }}
-{{- if not .Values.persistence.enabled }}
+        {{- if not .Values.persistence.enabled }}
         - name: database-data
           emptyDir: {}
-{{- else if $database.existingClaim }}
+        {{- else if $database.existingClaim }}
         - name: database-data
           persistentVolumeClaim:
             claimName: {{ $database.existingClaim }}
-{{- end }}
-{{- with .Values.database.internal.nodeSelector }}
+        {{- end }}
+      {{- with .Values.database.internal.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
-{{- end }}
-{{- with .Values.database.internal.affinity }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.database.internal.affinity }}
       affinity:
-{{ toYaml . | indent 8 }}
-{{- end }}
-{{- with .Values.database.internal.tolerations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.database.internal.tolerations }}
       tolerations:
-{{ toYaml . | indent 8 }}
-{{- end }}
-{{- if .Values.database.internal.priorityClassName }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.database.internal.priorityClassName }}
       priorityClassName: {{ .Values.database.internal.priorityClassName }}
-{{- end }}
-{{- if and .Values.persistence.enabled (not $database.existingClaim) }}
+      {{- end }}
+  {{- if and .Values.persistence.enabled (not $database.existingClaim) }}
   volumeClaimTemplates:
     - metadata:
         name: database-data
         labels:
-{{ include "harbor.legacy.labels" . | indent 10 }}
+          {{- include "harbor.legacy.labels" . | nindent 10 }}
         annotations:
-{{- range $key, $value := $database.annotations }}
+          {{- range $key, $value := $database.annotations }}
           {{ $key }}: {{ $value | quote }}
-{{- end }}
+          {{- end }}
       spec:
         accessModes: [{{ $database.accessMode | quote }}]
-{{- if $database.storageClass }}
-{{- if eq $database.storageClass "-" }}
+        {{- if $database.storageClass }}
+        {{- if eq $database.storageClass "-" }}
         storageClassName: ""
-{{- else }}
+        {{- else }}
         storageClassName: "{{ $database.storageClass }}"
-{{- end }}
-{{- end }}
+        {{- end }}
+        {{- end }}
         resources:
           requests:
             storage: {{ $database.size | quote }}
-{{- end }}
+  {{- end }}
 {{- end }}
