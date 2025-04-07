@@ -91,10 +91,14 @@ spec:
         - name: database-data
           persistentVolumeClaim:
             claimName: {{ $database.existingClaim }}
+        {{- else }}
+        - name: database-data
+          persistentVolumeClaim:
+            claimName: database-data-{{ template "harbor.database" . }}-0
         {{- end }}
 
 {{- if and .Values.persistence.enabled (not $database.existingClaim) }}
-volumeClaimTemplates:
+  volumeClaimTemplates:
     - metadata:
         name: database-data
         labels:
@@ -106,7 +110,7 @@ volumeClaimTemplates:
           - ReadWriteOnce # Adjust based on your storage requirements.
         resources:
           requests:
-            storage: {{ $database.size | default "1oGi" }} # Default size.
+            storage: {{ $database.size | default "10Gi" }} # Default size.
 {{- end }}
 
 {{- end }} # End of conditional check for internal database type.
