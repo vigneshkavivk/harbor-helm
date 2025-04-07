@@ -906,7 +906,7 @@ database:
   persistence:
     enabled: true
     accessMode: ReadWriteMany
-    size: 1Gi
+    size: 10Gi
   securityContext:
     runAsUser: 999
     fsGroup: 999
