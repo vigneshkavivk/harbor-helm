@@ -31,11 +31,9 @@ spec:
       serviceAccountName: {{ .Values.trivy.serviceAccountName }}
 {{- end }}
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 10000
-        runAsGroup: 10000
-        fsGroup: 10000
-        fsGroupChangePolicy: "OnRootMismatch"
+        runAsUser: 1000   # Non-root user (e.g., 1000)
+        runAsGroup: 1000  # Non-root group
+        fsGroup: 1000     # For volume permissions
       automountServiceAccountToken: {{ .Values.trivy.automountServiceAccountToken | default false }}
 
       initContainers:
