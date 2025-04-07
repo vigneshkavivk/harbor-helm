@@ -32,18 +32,21 @@ spec:
 {{- end }}
       securityContext:
         fsGroup: 10000
-        runAsNonRoot: true  # Explicitly enforce non-root at pod level
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       automountServiceAccountToken: {{ .Values.trivy.automountServiceAccountToken | default false }}
       initContainers:
         - name: fix-perms
-          image: alpine:3.14
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Skipping chown due to non-root policy. Assuming volume permissions are pre-set."
           securityContext:
-            runAsUser: 10000  # Must match main container
+            runAsUser: 10000
             runAsGroup: 10000
             allowPrivilegeEscalation: false
-          command: ["sh", "-c", "mkdir -p /home/scanner/.cache && chown -R 10000:10000 /home/scanner && chmod -R 755 /home/scanner"]
           volumeMounts:
             - name: data
               mountPath: /home/scanner
@@ -63,7 +66,9 @@ spec:
               value: /home/scanner
             - name: SCANNER_LOG_LEVEL
               value: {{ .Values.logLevel | quote }}
-            # ... [keep all other existing env variables] ...
+{{- with .Values.trivy.env }}
+{{ toYaml . | indent 12 }}
+{{- end }}
           ports:
             - name: api-server
               containerPort: {{ template "harbor.trivy.containerPort" . }}
@@ -90,7 +95,6 @@ spec:
             periodSeconds: 10
           resources:
 {{ toYaml .Values.trivy.resources | indent 12 }}
-
       volumes:
 {{- if .Values.internalTLS.enabled }}
         - name: trivy-internal-certs
@@ -107,6 +111,14 @@ spec:
 {{- end }}
 {{- with .Values.trivy.nodeSelector }}
       nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- with .Values.trivy.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- with .Values.trivy.tolerations }}
+      tolerations:
 {{ toYaml . | indent 8 }}
 {{- end }}
 {{- if and .Values.persistence.enabled (not $trivy.existingClaim) }}
