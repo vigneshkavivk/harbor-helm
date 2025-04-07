@@ -25,7 +25,7 @@ spec:
       annotations:
         checksum/secret: {{ include (print $.Template.BasePath "/database/database-secret.yaml") . | sha256sum }}
         {{- with .Values.database.podAnnotations }}
-          {{- toYaml . | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       securityContext:
@@ -91,10 +91,6 @@ spec:
         - name: database-data
           persistentVolumeClaim:
             claimName: {{ $database.existingClaim }}
-        {{- else }}
-        - name: database-data
-          persistentVolumeClaim:
-            claimName: database-data
         {{- end }}
 
   {{- if and .Values.persistence.enabled (not $database.existingClaim) }}
@@ -108,6 +104,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: {{ $database.storageClass | default "gp3-csi" }}
         resources:
           requests:
             storage: {{ $database.size | default "10Gi" }}
