@@ -69,23 +69,22 @@ spec:
       initContainers:
         - name: fix-perms
           image: goharbor/trivy-adapter-photon:v2.12.2
-          command: ["sh", "-c", "chmod +x /home/scanner/entrypoint.sh && ls -la /home/scanner/entrypoint.sh"]
+          command: ["sh", "-c", "chmod +x /home/scanner/entrypoint.sh && chown -R 10000:10000 /home/scanner && ls -la /home/scanner"]
           volumeMounts:
             - name: data
               mountPath: /home/scanner
-{{- with .Values.trivy.initContainers }}
-{{ toYaml . | indent 8 }}
-{{- end }}
 
       containers:
         - name: trivy
           image: {{ .Values.trivy.image.repository }}:{{ .Values.trivy.image.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-{{- if not (empty .Values.containerSecurityContext) }}
-          securityContext: {{ .Values.containerSecurityContext | toYaml | nindent 12 }}
-{{- end }}
-          command: ["/home/scanner/entrypoint.sh"]
+          securityContext:
+            runAsUser: 10000
+            runAsGroup: 10000
+          command: ["sh", "-c", "/home/scanner/entrypoint.sh"]
           env:
+            - name: "HOME"
+              value: "/home/scanner"
 {{- if has "trivy" .Values.proxy.components }}
             - name: HTTP_PROXY
               value: "{{ .Values.proxy.httpProxy }}"
@@ -153,9 +152,8 @@ spec:
               containerPort: {{ template "harbor.trivy.containerPort" . }}
           volumeMounts:
             - name: data
-              mountPath: /home/scanner/.cache
-              subPath: {{ .Values.persistence.persistentVolumeClaim.trivy.subPath }}
-              readOnly: false
+              mountPath: /home/scanner
+              subPath: ""
 {{- if .Values.internalTLS.enabled }}
             - name: trivy-internal-certs
               mountPath: /etc/harbor/ssl/trivy
