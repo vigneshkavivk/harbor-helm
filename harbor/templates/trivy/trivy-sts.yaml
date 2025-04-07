@@ -69,13 +69,10 @@ spec:
       initContainers:
         - name: fix-perms
           image: goharbor/trivy-adapter-photon:v2.12.2
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              cp /home/scanner/entrypoint.sh /shared/entrypoint.sh && chmod +x /shared/entrypoint.sh
+          command: ["sh", "-c", "chmod +x /home/scanner/entrypoint.sh"]
           volumeMounts:
-            - name: shared-scripts
-              mountPath: /shared
+            - name: data
+              mountPath: /home/scanner/.cache
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
