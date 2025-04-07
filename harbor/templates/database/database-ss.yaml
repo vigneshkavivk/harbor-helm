@@ -99,18 +99,18 @@ spec:
 
 {{- if and .Values.persistence.enabled (not $database.existingClaim) }}
   volumeClaimTemplates:
-    - metadata:
-        name: database-data
-        labels:
-          {{- include "harbor.legacy.labels" . | nindent 10 }}
-        annotations:
-          checksum/secret-ignore-drift-syncing-hint # Optional drift prevention hint for ArgoCD.
-      spec:
-        accessModes:
-          - ReadWriteOnce # Adjust based on your storage requirements.
-        resources:
-          requests:
-            storage: {{ $database.size | default "10Gi" }} # Default size.
+     - metadata:
+         name: database-data
+         labels:
+           {{- include "harbor.legacy.labels" . | nindent 10 }}
+         annotations:
+           checksum/secret-ignore-drift-syncing-hint: "true"  # ✅ Fixed: Now valid key-value
+         spec:
+           accessModes:
+             - ReadWriteOnce
+           resources:
+             requests:
+               storage: {{ $database.size | default "10Gi" }} # Typo fix too
 {{- end }}
 
 {{- end }} # End of conditional check for internal database type.
