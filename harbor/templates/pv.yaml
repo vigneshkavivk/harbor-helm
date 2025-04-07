@@ -30,7 +30,7 @@ metadata:
 spec:
   storageClassName: "harbor-storage"
   capacity:
-    storage: 1Gi  # Matches the jobservice PVC size from your config
+    storage: 10Gi  # Matches the jobservice PVC size from your config
   accessModes:
     - ReadWriteOnce
   hostPath:
@@ -46,7 +46,7 @@ metadata:
 spec:
   storageClassName: "harbor-storage"
   capacity:
-    storage: 5Gi  # Matches the database PVC size from your config
+    storage: 10Gi  # Matches the database PVC size from your config
   accessModes:
     - ReadWriteOnce
   hostPath:
