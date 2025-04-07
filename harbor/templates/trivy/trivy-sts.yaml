@@ -31,16 +31,20 @@ spec:
       serviceAccountName: {{ .Values.trivy.serviceAccountName }}
 {{- end }}
       securityContext:
-        fsGroup: 10000  # Ensures volume is writable by our non-root user
+        fsGroup: 10000
+        runAsNonRoot: true  # Explicitly enforce non-root at pod level
+        seccompProfile:
+          type: RuntimeDefault
       automountServiceAccountToken: {{ .Values.trivy.automountServiceAccountToken | default false }}
 
       initContainers:
         - name: fix-perms
-          image: alpine:3.14  # Using smaller Alpine image for permission fixes
+          image: alpine:3.14
           securityContext:
-            runAsUser: 10000  # Matches main container's user
+            runAsUser: 10000  # Must match main container
             runAsGroup: 10000
-          command: ["sh", "-c", "chown -R 10000:10000 /home/scanner && chmod -R 755 /home/scanner"]
+            allowPrivilegeEscalation: false
+          command: ["sh", "-c", "mkdir -p /home/scanner/.cache && chown -R 10000:10000 /home/scanner && chmod -R 755 /home/scanner"]
           volumeMounts:
             - name: data
               mountPath: /home/scanner
@@ -49,7 +53,7 @@ spec:
           image: {{ .Values.trivy.image.repository }}:{{ .Values.trivy.image.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           securityContext:
-            runAsUser: 10000  # Non-root user
+            runAsUser: 10000
             runAsGroup: 10000
             allowPrivilegeEscalation: false
             capabilities:
@@ -73,16 +77,16 @@ spec:
 {{- end }}
           livenessProbe:
             httpGet:
-              scheme: {{ include "harbor.component.scheme" . | upper }}
               path: /probe/healthy
               port: api-server
+              scheme: {{ include "harbor.component.scheme" . | upper }}
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              scheme: {{ include "harbor.component.scheme" . | upper }}
               path: /probe/ready
               port: api-server
+              scheme: {{ include "harbor.component.scheme" . | upper }}
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
