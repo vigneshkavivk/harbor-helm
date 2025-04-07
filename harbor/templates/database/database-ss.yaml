@@ -45,18 +45,23 @@ spec:
       terminationGracePeriodSeconds: 120
       initContainers:
         - name: data-permissions-ensurer
-          image: {{ .Values.database.internal.image.repository }}:{{ .Values.database.internal.image.tag }}
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
-          command: ["/bin/sh"]
-          args:
-            - -c
-            - |
-              mkdir -p /var/lib/postgresql/data/pgdata && chmod 700 /var/lib/postgresql/data/pgdata
-          volumeMounts:
-            - name: database-data
-              mountPath: /var/lib/postgresql/data
-              subPath: {{ $database.subPath }}
+    image: {{ .Values.database.internal.image.repository }}:{{ .Values.database.internal.image.tag }}
+    imagePullPolicy: {{ .Values.imagePullPolicy }}
+    command: ["/bin/sh"]
+    args:
+      - -c
+      - |
+        mkdir -p /var/lib/postgresql/data/pgdata && chmod 700 /var/lib/postgresql/data/pgdata
+    securityContext:
+      runAsUser: 0
+    volumeMounts:
+      - name: database-data
+        mountPath: /var/lib/postgresql/data
+        subPath: {{ $database.subPath }}
 {{- if .Values.database.internal.initContainer.permissions.resources }}
+    resources:
+{{ toYaml .Values.database.internal.initContainer.permissions.resources | indent 6 }}
+{{- end }}
           resources:
 {{ toYaml .Values.database.internal.initContainer.permissions.resources | indent 12 }}
 {{- end }}
