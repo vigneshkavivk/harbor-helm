@@ -563,8 +563,14 @@ core:
   revisionHistoryLimit: 10
   ## Startup probe values
   startupProbe:
+    httpGet:
+    path: /api/v2.0/ping
+    port: 8080
+    scheme: HTTP
     enabled: true
-    initialDelaySeconds: 30
+    initialDelaySeconds: 60  # Increase from 30
+    periodSeconds: 10
+    failureThreshold: 30
   # resources:
   #  requests:
   #    memory: 256Mi
