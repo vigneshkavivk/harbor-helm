@@ -788,10 +788,21 @@ registry:
     dryrun: false
 
 trivy:
-  persistence:
-    enabled: false
-  # enabled the flag to enable Trivy scanner
   enabled: true
+  image:
+    repository: goharbor/trivy-adapter-photon
+    tag: v2.12.2
+  initContainers:
+    - name: fix-permissions
+      image: goharbor/trivy-adapter-photon:v2.12.2
+      command: ["sh", "-c", "chmod +x /home/scanner/entrypoint.sh && ls -la /home/scanner/entrypoint.sh"]
+      volumeMounts:
+        - name: data
+          mountPath: /home/scanner
+  volumeMounts:
+    - name: data
+      mountPath: /home/scanner/.cache
+      subPath: trivy
   image:
     # repository the repository for Trivy adapter image
     repository: goharbor/trivy-adapter-photon
