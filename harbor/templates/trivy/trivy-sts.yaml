@@ -77,19 +77,12 @@ spec:
       {{- end }}
       containers:
         - name: trivy
-          image: goharbor/trivy-adapter-photon:v2.12.2
-          command: ["/shared/entrypoint.sh"]
-          volumeMounts:
-            - name: shared-scripts
-              mountPath: /shared
-
-              
-        - name: trivy
           image: {{ .Values.trivy.image.repository }}:{{ .Values.trivy.image.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           {{- if not (empty .Values.containerSecurityContext) }}
           securityContext: {{ .Values.containerSecurityContext | toYaml | nindent 12 }}
           {{- end }}
+          command: ["/home/scanner/entrypoint.sh"]
           env:
           {{- if has "trivy" .Values.proxy.components }}
             - name: HTTP_PROXY
@@ -157,16 +150,16 @@ spec:
             - name: api-server
               containerPort: {{ template "harbor.trivy.containerPort" . }}
           volumeMounts:
-          - name: data
-            mountPath: /home/scanner/.cache
-            subPath: {{ .Values.persistence.persistentVolumeClaim.trivy.subPath }}
-            readOnly: false
+            - name: data
+              mountPath: /home/scanner/.cache
+              subPath: {{ .Values.persistence.persistentVolumeClaim.trivy.subPath }}
+              readOnly: false
           {{- if .Values.internalTLS.enabled }}
-          - name: trivy-internal-certs
-            mountPath: /etc/harbor/ssl/trivy
+            - name: trivy-internal-certs
+              mountPath: /etc/harbor/ssl/trivy
           {{- end }}
           {{- if .Values.caBundleSecretName }}
-{{ include "harbor.caBundleVolumeMount" . | indent 10 }}
+{{ include "harbor.caBundleVolumeMount" . | indent 12 }}
           {{- end }}
           livenessProbe:
             httpGet:
@@ -190,23 +183,21 @@ spec:
 {{ toYaml .Values.trivy.resources | indent 12 }}
       {{- if or (or .Values.internalTLS.enabled .Values.caBundleSecretName) (or (not .Values.persistence.enabled) $trivy.existingClaim) }}
       volumes:
-       - name: shared-scripts
-         emptyDir: {}
       {{- if .Values.internalTLS.enabled }}
-      - name: trivy-internal-certs
-        secret:
-          secretName: {{ template "harbor.internalTLS.trivy.secretName" . }}
+        - name: trivy-internal-certs
+          secret:
+            secretName: {{ template "harbor.internalTLS.trivy.secretName" . }}
       {{- end }}
       {{- if .Values.caBundleSecretName }}
-{{ include "harbor.caBundleVolume" . | indent 6 }}
+{{ include "harbor.caBundleVolume" . | indent 8 }}
       {{- end }}
       {{- if not .Values.persistence.enabled }}
-      - name: "data"
-        emptyDir: {}
+        - name: "data"
+          emptyDir: {}
       {{- else if $trivy.existingClaim }}
-      - name: "data"
-        persistentVolumeClaim:
-          claimName: {{ $trivy.existingClaim }}
+        - name: "data"
+          persistentVolumeClaim:
+            claimName: {{ $trivy.existingClaim }}
       {{- end }}
       {{- end }}
     {{- with .Values.trivy.nodeSelector }}
