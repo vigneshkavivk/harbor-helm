@@ -36,7 +36,6 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       automountServiceAccountToken: {{ .Values.trivy.automountServiceAccountToken | default false }}
-
       initContainers:
         - name: fix-perms
           image: alpine:3.14
