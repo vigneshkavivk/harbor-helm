@@ -39,16 +39,13 @@ spec:
       automountServiceAccountToken: {{ .Values.trivy.automountServiceAccountToken | default false }}
 
       initContainers:
+              initContainers:
         - name: fix-perms
           image: goharbor/trivy-adapter-photon:v2.12.2
           command: ["sh", "-c", "chmod +x /home/scanner/entrypoint.sh && ls -la /home/scanner"]
-          securityContext:
-            runAsUser: 10000
-            runAsGroup: 10000
           volumeMounts:
             - name: data
               mountPath: /home/scanner
-
       containers:
         - name: trivy
           image: {{ .Values.trivy.image.repository }}:{{ .Values.trivy.image.tag }}
