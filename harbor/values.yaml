@@ -144,7 +144,7 @@ persistence:
         storageClass: "harbor-storage"
         subPath: ""
         accessMode: ReadWriteOnce
-        size: 1Gi
+        size: 10Gi
         annotations: {}
     # If external database is used, the following settings for database will
     # be ignored
@@ -153,7 +153,7 @@ persistence:
       storageClass: "harbor-storage"
       subPath: ""
       accessMode: ReadWriteOnce
-      size: 1Gi
+      size: 10Gi
       annotations: {}
     # If external Redis is used, the following settings for Redis will
     # be ignored
