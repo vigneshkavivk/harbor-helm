@@ -22,9 +22,6 @@ spec:
         {{- include "harbor.labels" . | nindent 8 }}
         component: database
         app.kubernetes.io/component: database
-      {{- with .Values.database.podLabels }}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       annotations:
         checksum/secret: {{ include (print $.Template.BasePath "/database/database-secret.yaml") . | sha256sum }}
         {{- with .Values.database.podAnnotations }}
@@ -34,82 +31,59 @@ spec:
       securityContext:
         runAsUser: 999
         fsGroup: 999
-      {{- if .Values.database.internal.serviceAccountName }}
-      serviceAccountName: {{ .Values.database.internal.serviceAccountName }}
-      {{- end }}
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      serviceAccountName: {{ .Values.database.internal.serviceAccountName | default "" }}
       automountServiceAccountToken: {{ .Values.database.internal.automountServiceAccountToken | default false }}
       terminationGracePeriodSeconds: 120
       initContainers:
         - name: data-permissions-ensurer
           image: {{ .Values.database.internal.image.repository }}:{{ .Values.database.internal.image.tag }}
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          imagePullPolicy: {{ .Values.imagePullPolicy | default "IfNotPresent" }}
           command: ["/bin/sh"]
           args:
             - -c
             - |
               mkdir -p /var/lib/postgresql/data/pgdata && chmod 700 /var/lib/postgresql/data/pgdata
           securityContext:
-             runAsUser: 999
-             fsGroup: 999
+            runAsUser: 999
+            fsGroup: 999
           volumeMounts:
             - name: database-data
               mountPath: /var/lib/postgresql/data
-              subPath: {{ $database.subPath }}
-          {{- if .Values.database.internal.initContainer.permissions.resources }}
-          resources:
-            {{- toYaml .Values.database.internal.initContainer.permissions.resources | nindent 12 }}
-          {{- end }}
-      {{- with .Values.database.internal.extraInitContainers }}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+              subPath: {{ $database.subPath | default "" }}
       containers:
         - name: database
           image: {{ .Values.database.internal.image.repository }}:{{ .Values.database.internal.image.tag }}
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
-          {{- if not (empty .Values.containerSecurityContext) }}
+          imagePullPolicy: {{ .Values.imagePullPolicy | default "IfNotPresent" }}
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
-          {{- end }}
           livenessProbe:
             exec:
               command: ["/docker-healthcheck.sh"]
             initialDelaySeconds: 300
             periodSeconds: 10
-            timeoutSeconds: {{ .Values.database.internal.livenessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .Values.database.internal.livenessProbe.timeoutSeconds | default 5 }}
           readinessProbe:
             exec:
               command: ["/docker-healthcheck.sh"]
             initialDelaySeconds: 1
             periodSeconds: 10
-            timeoutSeconds: {{ .Values.database.internal.readinessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .Values.database.internal.readinessProbe.timeoutSeconds | default 5 }}
           envFrom:
             - secretRef:
                 name: "{{ template "harbor.database" . }}"
           env:
             - name: PGDATA
               value: "/var/lib/postgresql/data/pgdata"
-            {{- with .Values.database.internal.extraEnvVars }}
-              {{- toYaml . | nindent 12 }}
-            {{- end }}
           volumeMounts:
             - name: database-data
               mountPath: /var/lib/postgresql/data
-              subPath: {{ $database.subPath }}
+              subPath: {{ $database.subPath | default "" }}
             - name: shm-volume
               mountPath: /dev/shm
-          {{- if .Values.database.internal.resources }}
-          resources:
-            {{- toYaml .Values.database.internal.resources | nindent 12 }}
-          {{- end }}
       volumes:
         - name: shm-volume
           emptyDir:
             medium: Memory
-            sizeLimit: {{ .Values.database.internal.shmSizeLimit }}
         {{- if not .Values.persistence.enabled }}
         - name: database-data
           emptyDir: {}
@@ -118,42 +92,21 @@ spec:
           persistentVolumeClaim:
             claimName: {{ $database.existingClaim }}
         {{- end }}
-      {{- with .Values.database.internal.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.database.internal.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.database.internal.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- if .Values.database.internal.priorityClassName }}
-      priorityClassName: {{ .Values.database.internal.priorityClassName }}
-      {{- end }}
-  {{- if and .Values.persistence.enabled (not $database.existingClaim) }}
-  volumeClaimTemplates:
+
+{{- if and .Values.persistence.enabled (not $database.existingClaim) }}
+volumeClaimTemplates:
     - metadata:
         name: database-data
         labels:
           {{- include "harbor.legacy.labels" . | nindent 10 }}
         annotations:
-          {{- range $key, $value := $database.annotations }}
-          {{ $key }}: {{ $value | quote }}
-          {{- end }}
+          checksum/secret-ignore-drift-syncing-hint # Optional drift prevention hint for ArgoCD.
       spec:
-        accessModes: [{{ $database.accessMode | quote }}]
-        {{- if $database.storageClass }}
-        {{- if eq $database.storageClass "-" }}
-        storageClassName: ""
-        {{- else }}
-        storageClassName: "{{ $database.storageClass }}"
-        {{- end }}
-        {{- end }}
+        accessModes:
+          - ReadWriteOnce # Adjust based on your storage requirements.
         resources:
           requests:
-            storage: {{ $database.size | quote }}
-  {{- end }}
+            storage: {{ $database.size | default "1Gi" }} # Default size.
 {{- end }}
+
+{{- end }} # End of conditional check for internal database type.
