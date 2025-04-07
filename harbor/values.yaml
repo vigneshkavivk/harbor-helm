@@ -900,10 +900,19 @@ trivy:
   timeout: 5m0s
 
 database:
+    servicePort: 5432
   # if external database is used, set "type" to "external"
   # and fill the connection information in "external" section
   type: internal
+  persistence:
+    enabled: true
+    accessMode: ReadWriteMany
+    size: 1Gi
+  securityContext:
+    runAsUser: 999
+    fsGroup: 999
   internal:
+    servicePort: 5432
     image:
       repository: goharbor/harbor-db
       tag: v2.12.2
