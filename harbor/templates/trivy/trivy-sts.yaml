@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/component: trivy
 spec:
   replicas: {{ .Values.trivy.replicas }}
-  serviceName: {{  template "harbor.trivy" . }}
+  serviceName: {{ template "harbor.trivy" . }}
   selector:
     matchLabels:
 {{ include "harbor.matchLabels" . | indent 6 }}
@@ -38,7 +38,7 @@ spec:
     spec:
 {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+{{ toYaml . | indent 8 }}
 {{- end }}
 {{- if .Values.trivy.serviceAccountName }}
       serviceAccountName: {{ .Values.trivy.serviceAccountName }}
@@ -55,17 +55,17 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       automountServiceAccountToken: {{ .Values.trivy.automountServiceAccountToken | default false }}
-{{- with .Values.trivy.topologySpreadConstraints}}
+{{- with .Values.trivy.topologySpreadConstraints }}
       topologySpreadConstraints:
 {{- range . }}
-      - {{ . | toYaml | indent 8 | trim }}
-        labelSelector:
-          matchLabels:
+        - {{ . | toYaml | indent 8 | trim }}
+          labelSelector:
+            matchLabels:
 {{ include "harbor.matchLabels" $ | indent 12 }}
-            component: trivy
+              component: trivy
 {{- end }}
 {{- end }}
-      {{- with .Values.trivy.initContainers }}
+
       initContainers:
         - name: fix-perms
           image: goharbor/trivy-adapter-photon:v2.12.2
@@ -73,25 +73,27 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /home/scanner
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+{{- with .Values.trivy.initContainers }}
+{{ toYaml . | indent 8 }}
+{{- end }}
+
       containers:
         - name: trivy
           image: {{ .Values.trivy.image.repository }}:{{ .Values.trivy.image.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-          {{- if not (empty .Values.containerSecurityContext) }}
+{{- if not (empty .Values.containerSecurityContext) }}
           securityContext: {{ .Values.containerSecurityContext | toYaml | nindent 12 }}
-          {{- end }}
+{{- end }}
           command: ["/home/scanner/entrypoint.sh"]
           env:
-          {{- if has "trivy" .Values.proxy.components }}
+{{- if has "trivy" .Values.proxy.components }}
             - name: HTTP_PROXY
               value: "{{ .Values.proxy.httpProxy }}"
             - name: HTTPS_PROXY
               value: "{{ .Values.proxy.httpsProxy }}"
             - name: NO_PROXY
               value: "{{ template "harbor.noProxy" . }}"
-          {{- end }}
+{{- end }}
             - name: "SCANNER_LOG_LEVEL"
               value: {{ .Values.logLevel | quote }}
             - name: "SCANNER_TRIVY_CACHE_DIR"
@@ -120,14 +122,14 @@ spec:
               value: {{ .Values.trivy.insecure | default false | quote }}
             - name: SCANNER_API_SERVER_ADDR
               value: ":{{ template "harbor.trivy.containerPort" . }}"
-            {{- if .Values.internalTLS.enabled }}
+{{- if .Values.internalTLS.enabled }}
             - name: INTERNAL_TLS_ENABLED
               value: "true"
             - name: SCANNER_API_SERVER_TLS_KEY
               value: /etc/harbor/ssl/trivy/tls.key
             - name: SCANNER_API_SERVER_TLS_CERTIFICATE
               value: /etc/harbor/ssl/trivy/tls.crt
-            {{- end }}
+{{- end }}
             - name: "SCANNER_REDIS_URL"
               valueFrom:
                 secretKeyRef:
@@ -144,7 +146,7 @@ spec:
                   name: {{ template "harbor.trivy" . }}
                   key: redisURL
 {{- with .Values.trivy.extraEnvVars }}
-{{- toYaml . | nindent 12 }}
+{{ toYaml . | indent 12 }}
 {{- end }}
           ports:
             - name: api-server
@@ -154,13 +156,13 @@ spec:
               mountPath: /home/scanner/.cache
               subPath: {{ .Values.persistence.persistentVolumeClaim.trivy.subPath }}
               readOnly: false
-          {{- if .Values.internalTLS.enabled }}
+{{- if .Values.internalTLS.enabled }}
             - name: trivy-internal-certs
               mountPath: /etc/harbor/ssl/trivy
-          {{- end }}
-          {{- if .Values.caBundleSecretName }}
+{{- end }}
+{{- if .Values.caBundleSecretName }}
 {{ include "harbor.caBundleVolumeMount" . | indent 12 }}
-          {{- end }}
+{{- end }}
           livenessProbe:
             httpGet:
               scheme: {{ include "harbor.component.scheme" . | upper }}
@@ -181,61 +183,61 @@ spec:
             failureThreshold: 3
           resources:
 {{ toYaml .Values.trivy.resources | indent 12 }}
-      {{- if or (or .Values.internalTLS.enabled .Values.caBundleSecretName) (or (not .Values.persistence.enabled) $trivy.existingClaim) }}
+{{- if or (or .Values.internalTLS.enabled .Values.caBundleSecretName) (or (not .Values.persistence.enabled) $trivy.existingClaim) }}
       volumes:
-      {{- if .Values.internalTLS.enabled }}
+{{- if .Values.internalTLS.enabled }}
         - name: trivy-internal-certs
           secret:
             secretName: {{ template "harbor.internalTLS.trivy.secretName" . }}
-      {{- end }}
-      {{- if .Values.caBundleSecretName }}
+{{- end }}
+{{- if .Values.caBundleSecretName }}
 {{ include "harbor.caBundleVolume" . | indent 8 }}
-      {{- end }}
-      {{- if not .Values.persistence.enabled }}
+{{- end }}
+{{- if not .Values.persistence.enabled }}
         - name: "data"
           emptyDir: {}
-      {{- else if $trivy.existingClaim }}
+{{- else if $trivy.existingClaim }}
         - name: "data"
           persistentVolumeClaim:
             claimName: {{ $trivy.existingClaim }}
-      {{- end }}
-      {{- end }}
-    {{- with .Values.trivy.nodeSelector }}
+{{- end }}
+{{- end }}
+{{- with .Values.trivy.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.trivy.affinity }}
+{{- end }}
+{{- with .Values.trivy.affinity }}
       affinity:
 {{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.trivy.tolerations }}
+{{- end }}
+{{- with .Values.trivy.tolerations }}
       tolerations:
 {{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- if .Values.trivy.priorityClassName }}
+{{- end }}
+{{- if .Values.trivy.priorityClassName }}
       priorityClassName: {{ .Values.trivy.priorityClassName }}
-    {{- end }}
+{{- end }}
 {{- if and .Values.persistence.enabled (not $trivy.existingClaim) }}
   volumeClaimTemplates:
-  - metadata:
-      name: data
-      labels:
-{{ include "harbor.legacy.labels" . | indent 8 }}
-      annotations:
-      {{- range $key, $value := $trivy.annotations }}
-        {{ $key }}: {{ $value | quote }}
-      {{- end }}
-    spec:
-      accessModes: [{{ $trivy.accessMode | quote }}]
-      {{- if $trivy.storageClass }}
-      {{- if (eq "-" $trivy.storageClass) }}
-      storageClassName: ""
-      {{- else }}
-      storageClassName: "{{ $trivy.storageClass }}"
-      {{- end }}
-      {{- end }}
-      resources:
-        requests:
-          storage: {{ $trivy.size | quote }}
+    - metadata:
+        name: data
+        labels:
+{{ include "harbor.legacy.labels" . | indent 10 }}
+        annotations:
+{{- range $key, $value := $trivy.annotations }}
+          {{ $key }}: {{ $value | quote }}
+{{- end }}
+      spec:
+        accessModes: [{{ $trivy.accessMode | quote }}]
+{{- if $trivy.storageClass }}
+{{- if (eq "-" $trivy.storageClass) }}
+        storageClassName: ""
+{{- else }}
+        storageClassName: "{{ $trivy.storageClass }}"
+{{- end }}
+{{- end }}
+        resources:
+          requests:
+            storage: {{ $trivy.size | quote }}
 {{- end }}
 {{- end }}
