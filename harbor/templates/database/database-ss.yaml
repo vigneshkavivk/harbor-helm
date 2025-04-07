@@ -94,23 +94,22 @@ spec:
         {{- else }}
         - name: database-data
           persistentVolumeClaim:
-            claimName: database-data-{{ template "harbor.database" . }}-0
+            claimName: database-data
         {{- end }}
 
-{{- if and .Values.persistence.enabled (not $database.existingClaim) }}
+  {{- if and .Values.persistence.enabled (not $database.existingClaim) }}
   volumeClaimTemplates:
-     - metadata:
-         name: database-data
-         labels:
-           {{- include "harbor.legacy.labels" . | nindent 10 }}
-         annotations:
-           checksum/secret-ignore-drift-syncing-hint: "true"  # ✅ Fixed: Now valid key-value
-         spec:
-           accessModes:
-             - ReadWriteOnce
-           resources:
-             requests:
-               storage: {{ $database.size | default "10Gi" }} # Typo fix too
+    - metadata:
+        name: database-data
+        labels:
+          {{- include "harbor.legacy.labels" . | nindent 10 }}
+        annotations:
+          checksum/secret-ignore-drift-syncing-hint: "true"
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ $database.size | default "10Gi" }}
+  {{- end }}
 {{- end }}
-
-{{- end }} # End of conditional check for internal database type.
