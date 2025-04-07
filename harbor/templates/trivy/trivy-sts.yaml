@@ -220,7 +220,7 @@ spec:
     {{- end }}
 {{- if and .Values.persistence.enabled (not $trivy.existingClaim) }}
   volumeClaimTemplates:
-  - metadata:
+    - metadata:
       name: data
       labels:
 {{ include "harbor.legacy.labels" . | indent 8 }}
