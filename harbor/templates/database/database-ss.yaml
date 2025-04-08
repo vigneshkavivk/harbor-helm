@@ -44,7 +44,7 @@ spec:
              runAsUser: 0
              runAsGroup: 0
              fsGroup: 1000
-            allowPrivilegeEscalation: false
+             allowPrivilegeEscalation: false
           volumeMounts:
             - name: database-data
               mountPath: /var/lib/postgresql/data
