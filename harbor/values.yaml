@@ -870,7 +870,8 @@ database:
     readinessProbe:
       timeoutSeconds: 5
      # Optional if you're managing PVC manually
-  nameOverride: harbor-database
+  nameOverride: 
+    harbor-database
     extraEnvVars: []
     nodeSelector: {}
     tolerations: []
