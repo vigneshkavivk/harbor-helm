@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "{{ template "harbor.database" . }}"
+  name: harbor-database
   namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "harbor.labels" . | nindent 4 }}
@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/component: database
 spec:
   replicas: 1
-  serviceName: "{{ template "harbor.database" . }}"
+  serviceName: harbor-databse
   selector:
     matchLabels:
       {{- include "harbor.matchLabels" . | nindent 6 }}
@@ -70,7 +70,7 @@ spec:
             timeoutSeconds: {{ .Values.database.internal.readinessProbe.timeoutSeconds | default 5 }}
           envFrom:
             - secretRef:
-                name: "{{ template "harbor.database" . }}"
+                name: harbor-database
           env:
             - name: PGDATA
               value: "/var/lib/postgresql/data/pgdata"
