@@ -41,8 +41,9 @@ spec:
           args:
             - mkdir -p /var/lib/postgresql/data/pgdata && chmod 700 /var/lib/postgresql/data/pgdata
           securityContext:
-            runAsUser: 0
-            runAsGroup: 0
+             runAsUser: 0
+             runAsGroup: 0
+             fsGroup: 1000
             allowPrivilegeEscalation: false
           volumeMounts:
             - name: database-data
