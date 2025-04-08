@@ -865,10 +865,12 @@ database:
     #    cpu: 100m
     # The timeout used in livenessProbe; 1 to 5 seconds
     livenessProbe:
-      timeoutSeconds: 1
+      timeoutSeconds: 5
     # The timeout used in readinessProbe; 1 to 5 seconds
     readinessProbe:
-      timeoutSeconds: 1
+      timeoutSeconds: 5
+     # Optional if you're managing PVC manually
+  nameOverride: harbor-database
     extraEnvVars: []
     nodeSelector: {}
     tolerations: []
