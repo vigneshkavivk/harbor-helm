@@ -35,21 +35,19 @@ spec:
       automountServiceAccountToken: {{ .Values.database.internal.automountServiceAccountToken | default false }}
       terminationGracePeriodSeconds: 120
       initContainers:
-        - name: data-permissions-ensurer
-          image: {{ .Values.database.internal.image.repository }}:{{ .Values.database.internal.image.tag }}
-          imagePullPolicy: {{ .Values.imagePullPolicy | default "IfNotPresent" }}
-          command: ["/bin/sh"]
-          args:
-            - -c
-            - |
-              mkdir -p /var/lib/postgresql/data/pgdata && chmod 700 /var/lib/postgresql/data/pgdata
-          securityContext:
-            runAsUser: 999
-            fsGroup: 999
-          volumeMounts:
-            - name: database-data
-              mountPath: /var/lib/postgresql/data
-              subPath: {{ $database.subPath | default "" }}
+        initContainers:
+  - name: data-permissions-ensurer
+    image: {{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}
+    command: ["/bin/sh", "-c"]
+    args:
+      - mkdir -p /var/lib/postgresql/data/pgdata && chmod 700 /var/lib/postgresql/data/pgdata
+    securityContext:
+      runAsUser: 0  # <-- run as root
+      runAsGroup: 0
+      allowPrivilegeEscalation: false
+    volumeMounts:
+      - name: data
+        mountPath: /var/lib/postgresql/data
       containers:
         - name: database
           image: {{ .Values.database.internal.image.repository }}:{{ .Values.database.internal.image.tag }}
