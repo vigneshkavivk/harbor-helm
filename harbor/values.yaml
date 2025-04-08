@@ -89,6 +89,11 @@ persistence:
       subPath: ""
       accessMode: ReadWriteOnce
       size: 10Gi
+      mountPath: /var/lib/postgresql/data
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
       annotations: {}
     # If external Redis is used, the following settings for Redis will
     # be ignored
