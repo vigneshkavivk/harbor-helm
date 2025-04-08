@@ -93,6 +93,10 @@ app: "{{ template "harbor.name" . }}"
   {{- end -}}
 {{- end -}}
 
+{{- define "harbor.database.serviceName" -}}
+harbor-database
+{{- end -}}
+
 {{- define "harbor.database.port" -}}
   {{- if eq .Values.database.type "internal" -}}
     {{- printf "%s" "5432" -}}
