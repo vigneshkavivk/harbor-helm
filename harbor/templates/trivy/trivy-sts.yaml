@@ -6,7 +6,7 @@ metadata:
   name: {{ template "harbor.trivy" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels:
-{{ include "harbor.labels" . | indent 4 }}
+    {{- include "harbor.labels" . | nindent 4 }}
     component: trivy
     app.kubernetes.io/component: trivy
 spec:
@@ -14,35 +14,34 @@ spec:
   serviceName: {{ template "harbor.trivy" . }}
   selector:
     matchLabels:
-{{ include "harbor.matchLabels" . | indent 6 }}
+      {{- include "harbor.matchLabels" . | nindent 6 }}
       component: trivy
   template:
     metadata:
       labels:
-{{ include "harbor.labels" . | indent 8 }}
+        {{- include "harbor.labels" . | nindent 8 }}
         component: trivy
         app.kubernetes.io/component: trivy
     spec:
-{{- with .Values.imagePullSecrets }}
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-{{ toYaml . | indent 8 }}
-{{- end }}
-{{- if .Values.trivy.serviceAccountName }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.trivy.serviceAccountName }}
       serviceAccountName: {{ .Values.trivy.serviceAccountName }}
-{{- end }}
+      {{- end }}
+      automountServiceAccountToken: {{ .Values.trivy.automountServiceAccountToken | default false }}
       securityContext:
         fsGroup: 10000
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-      automountServiceAccountToken: {{ .Values.trivy.automountServiceAccountToken | default false }}
       initContainers:
         - name: fix-perms
           image: busybox:1.36
           command: ["/bin/sh", "-c"]
           args:
-            - |
-              echo "Skipping chown due to non-root policy. Assuming volume permissions are pre-set."
+            - echo "Skipping chown due to non-root policy. Assuming volume permissions are pre-set."
           securityContext:
             runAsUser: 10000
             runAsGroup: 10000
@@ -54,31 +53,31 @@ spec:
         - name: trivy
           image: {{ .Values.trivy.image.repository }}:{{ .Values.trivy.image.tag }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["sh", "-c", "/home/scanner/entrypoint.sh"]
           securityContext:
             runAsUser: 10000
             runAsGroup: 10000
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-          command: ["sh", "-c", "/home/scanner/entrypoint.sh"]
           env:
             - name: HOME
               value: /home/scanner
             - name: SCANNER_LOG_LEVEL
               value: {{ .Values.logLevel | quote }}
-{{- with .Values.trivy.env }}
-{{ toYaml . | indent 12 }}
-{{- end }}
+            {{- with .Values.trivy.env }}
+            {{ toYaml . | indent 12 }}
+            {{- end }}
           ports:
             - name: api-server
               containerPort: {{ template "harbor.trivy.containerPort" . }}
           volumeMounts:
             - name: data
               mountPath: /home/scanner
-{{- if .Values.internalTLS.enabled }}
+            {{- if .Values.internalTLS.enabled }}
             - name: trivy-internal-certs
               mountPath: /etc/harbor/ssl/trivy
-{{- end }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /probe/healthy
@@ -94,46 +93,47 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
-{{ toYaml .Values.trivy.resources | indent 12 }}
+            {{ toYaml .Values.trivy.resources | indent 12 }}
       volumes:
-{{- if .Values.internalTLS.enabled }}
+        {{- if .Values.internalTLS.enabled }}
         - name: trivy-internal-certs
           secret:
             secretName: {{ template "harbor.internalTLS.trivy.secretName" . }}
-{{- end }}
-{{- if not .Values.persistence.enabled }}
-        - name: "data"
+        {{- end }}
+        {{- if not .Values.persistence.enabled }}
+        - name: data
           emptyDir: {}
-{{- else if $trivy.existingClaim }}
-        - name: "data"
+        {{- else if $trivy.existingClaim }}
+        - name: data
           persistentVolumeClaim:
             claimName: {{ $trivy.existingClaim }}
-{{- end }}
-{{- with .Values.trivy.nodeSelector }}
+        {{- end }}
+      {{- with .Values.trivy.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
-{{- end }}
-{{- with .Values.trivy.affinity }}
+        {{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.trivy.affinity }}
       affinity:
-{{ toYaml . | indent 8 }}
-{{- end }}
-{{- with .Values.trivy.tolerations }}
+        {{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.trivy.tolerations }}
       tolerations:
-{{ toYaml . | indent 8 }}
-{{- end }}
-{{- if and .Values.persistence.enabled (not $trivy.existingClaim) }}
+        {{ toYaml . | indent 8 }}
+      {{- end }}
+  {{- if and .Values.persistence.enabled (not $trivy.existingClaim) }}
   volumeClaimTemplates:
     - metadata:
         name: data
         labels:
-{{ include "harbor.legacy.labels" . | indent 10 }}
+          {{- include "harbor.legacy.labels" . | nindent 10 }}
       spec:
-        accessModes: [{{ $trivy.accessMode | quote }}]
-{{- if $trivy.storageClass }}
-        storageClassName: "{{ $trivy.storageClass }}"
-{{- end }}
+        accessModes:
+          - {{ $trivy.accessMode | quote }}
+        {{- if $trivy.storageClass }}
+        storageClassName: {{ $trivy.storageClass | quote }}
+        {{- end }}
         resources:
           requests:
             storage: {{ $trivy.size | quote }}
-{{- end }}
+  {{- end }}
 {{- end }}
