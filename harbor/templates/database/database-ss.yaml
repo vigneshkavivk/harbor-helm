@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/component: database
 spec:
   replicas: 1
-  serviceName: harbor-databse
+  serviceName: {{ include "harbor.database.serviceName" . }}
   selector:
     matchLabels:
       {{- include "harbor.matchLabels" . | nindent 6 }}
