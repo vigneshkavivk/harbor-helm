@@ -93,7 +93,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
-            {{ toYaml .Values.trivy.resources | indent 12 }}
+            {{- toYaml .Values.trivy.resources | nindent 12 }}
       volumes:
         {{- if .Values.internalTLS.enabled }}
         - name: trivy-internal-certs
