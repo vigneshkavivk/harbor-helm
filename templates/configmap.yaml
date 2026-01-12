@@ -1,6 +1,17 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-docs
+  name: {{ .Release.Name }}-nginx-config
 data:
-{{ (.Files.Glob "files/**").AsConfig | indent 2 }}
+  default.conf: |
+    server {
+      listen 80;
+      server_name _;
+
+      root /usr/share/nginx/html;
+      index index.html;
+
+      location / {
+        try_files $uri $uri/ /index.html;
+      }
+    }
