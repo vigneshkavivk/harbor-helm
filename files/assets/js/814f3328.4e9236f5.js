@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkCloudMaSa_docs=self.webpackChunkCloudMaSa_docs||[]).push([[472],{5513(e){e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"01-01-2026-welcome","permalink":"/blog/01-01-2026-welcome","unlisted":false,"date":"2025-12-31T11:04:48.000Z"}]}')}}]);
